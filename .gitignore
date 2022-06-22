@@ -2,6 +2,7 @@ oxford/
 !/oxford/get_oxford.sh
 paris/data/
 !/paris/get_paris.sh
+compute_ap
 
 .DS_Store
 *.pyc### JetBrains template
