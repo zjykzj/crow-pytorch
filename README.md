@@ -1,8 +1,8 @@
-<div align="right">
+<!-- <div align="right">
   Language:
     🇺🇸
   <a title="Chinese" href="./README.zh-CN.md">🇨🇳</a>
-</div>
+</div> -->
 
  <div align="center"><a title="" href="https://github.com/zjykzj/crow-pytorch"><img align="center" src="./imgs/CroW.png"></a></div>
 
