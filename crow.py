@@ -1,7 +1,9 @@
 # Copyright 2015, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
-import numpy as np
+import os
 import scipy
+
+import numpy as np
 from sklearn.preprocessing import normalize as sknormalize
 from sklearn.decomposition import PCA
 
@@ -21,8 +23,8 @@ def compute_crow_spatial_weight(X, a=2, b=2):
         a spatial weight matrix of size (height, width)
     """
     S = X.sum(axis=0)
-    z = (S**a).sum()**(1./a)
-    return (S / z)**(1./b) if b != 1 else (S / z)
+    z = (S ** a).sum() ** (1. / a)
+    return (S / z) ** (1. / b) if b != 1 else (S / z)
 
 
 def compute_crow_channel_weight(X):
@@ -83,7 +85,7 @@ def normalize(x, copy=False):
     This helper handles the case of a single column vector.
     """
     if type(x) == np.ndarray and len(x.shape) == 1:
-        return np.squeeze(sknormalize(x.reshape(1,-1), copy=copy))
+        return np.squeeze(sknormalize(x.reshape(1, -1), copy=copy))
     else:
         return sknormalize(x, copy=copy)
 
@@ -117,7 +119,7 @@ def run_feature_processing_pipeline(features, d=128, whiten=True, copy=False, pa
     else:
         pca = PCA(n_components=d, whiten=whiten, copy=copy)
         features = pca.fit_transform(features)
-        params = { 'pca': pca }
+        params = {'pca': pca}
 
     # Normalize
     features = normalize(features, copy=copy)
