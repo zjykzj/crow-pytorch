@@ -1,11 +1,13 @@
 # Copyright 2015, Yahoo Inc.
 # Licensed under the terms of the Apache License, Version 2.0. See the LICENSE file associated with the project for terms.
-import sys
 import os
-import glob
+import sys
+
+import numpy as np
+from tqdm import tqdm
 from functools import partial
 from tempfile import NamedTemporaryFile
-import numpy as np
+
 from crow import run_feature_processing_pipeline, apply_crow_aggregation, apply_ucrow_aggregation, normalize
 
 
@@ -211,7 +213,7 @@ def run_eval(queries_dir, groundtruth_dir, index_features, whiten_params, out_di
 
     # Iterate queries, process them, rank results, and evaluate mAP
     aps = []
-    for Q, query_name in load_features(queries_dir):
+    for Q, query_name in tqdm(load_features(queries_dir)):
         Q = agg_fn(Q)
 
         # Normalize and PCA to final feature
@@ -238,12 +240,12 @@ if __name__ == '__main__':
     parser.add_argument('--wt', dest='weighting', type=str, default='crow',
                         help='weighting to apply for feature aggregation')
 
-    parser.add_argument('--index_features', dest='index_features', type=str, default='oxford/pool5',
+    parser.add_argument('--index_features', dest='index_features', type=str, default='oxford/layer4',
                         help='directory containing raw features to index')
-    parser.add_argument('--whiten_features', dest='whiten_features', type=str, default='paris/pool5',
+    parser.add_argument('--whiten_features', dest='whiten_features', type=str, default='paris/layer4',
                         help='directory containing raw features to fit whitening')
 
-    parser.add_argument('--queries', dest='queries', type=str, default='oxford/pool5_queries/',
+    parser.add_argument('--queries', dest='queries', type=str, default='oxford/layer4_queries/',
                         help='directory containing image files')
     parser.add_argument('--groundtruth', dest='groundtruth', type=str, default='oxford/groundtruth/',
                         help='directory containing groundtruth files')
