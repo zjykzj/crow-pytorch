@@ -4,8 +4,11 @@ pushd paris/
 
 # Get data
 mkdir data/
-curl http://www.robots.ox.ac.uk/~vgg/data/parisbuildings/paris_1.tgz | tar xz -C data/
-curl http://www.robots.ox.ac.uk/~vgg/data/parisbuildings/paris_2.tgz | tar xz -C data/
+#curl http://www.robots.ox.ac.uk/~vgg/data/parisbuildings/paris_1.tgz | tar xz -C data/
+#curl http://www.robots.ox.ac.uk/~vgg/data/parisbuildings/paris_2.tgz | tar xz -C data/
+curl https://www.robots.ox.ac.uk/~vgg/data/parisbuildings/paris_1-v1.tgz | tar xz -C data/
+curl https://www.robots.ox.ac.uk/~vgg/data/parisbuildings/paris_2-v1.tgz | tar xz -C data/
+
 
 # Put everything in same dir for simplicity
 mv data/paris/defense/* data/
