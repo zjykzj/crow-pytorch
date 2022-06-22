@@ -153,6 +153,8 @@ def get_ap(inds, dists, query_name, index_names, groundtruth_dir, ranked_dir=Non
     else:
         f = NamedTemporaryFile(delete=False)
         rank_file = f.name
+        f = open(rank_file, 'w')
+    # print('rank_file:\n', rank_file)
 
     f.writelines([index_names[i] + '\n' for i in inds])
     f.close()
@@ -214,10 +216,14 @@ def run_eval(queries_dir, groundtruth_dir, index_features, whiten_params, out_di
     # Iterate queries, process them, rank results, and evaluate mAP
     aps = []
     for Q, query_name in tqdm(load_features(queries_dir)):
+        # print('raw feature:\n', Q.shape)
         Q = agg_fn(Q)
+        # print('aggregated feature:\n', Q.shape)
+        Q = Q.reshape(1, -1)
 
         # Normalize and PCA to final feature
         Q, _ = run_feature_processing_pipeline(Q, params=whiten_params)
+        # print('preprocessed feature:\n', Q.shape)
 
         inds, dists = get_nn(Q, data)
 
