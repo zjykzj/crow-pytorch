@@ -28,8 +28,8 @@ def get_nn(x, data, k=None):
     if k is None:
         k = len(data)
 
-    dists = ((x - data)**2).sum(axis=1)
-    idx = np.argsort(dists) 
+    dists = ((x - data) ** 2).sum(axis=1)
+    idx = np.argsort(dists)
     dists = dists[idx]
 
     return idx[:k], dists[:k]
@@ -53,7 +53,7 @@ def simple_query_expansion(Q, data, inds, top_k=10):
     :returns ndarray dists:
         the squared distances
     """
-    Q += data[inds[:top_k],:].sum(axis=0)
+    Q += data[inds[:top_k], :].sum(axis=0)
     return normalize(Q)
 
 
@@ -108,7 +108,7 @@ def load_and_aggregate_features(feature_dir, agg_fn):
     :returns list names:
         corresponding file names without extension
     """
-    print 'Loading features %s ...' % str(feature_dir)
+    print('Loading features %s ...' % str(feature_dir))
     features = []
     names = []
     for X, name in load_features(feature_dir):
@@ -186,7 +186,7 @@ def fit_whitening(whiten_features, agg_fn, d):
 
     # Whiten, and reduce dim of features
     # Whitening is trained on the same images that we query against here for expediency
-    print 'Fitting PCA/whitening wth d=%d on %s ...' % (d, whiten_features)
+    print('Fitting PCA/whitening wth d=%d on %s ...' % (d, whiten_features))
     _, whiten_params = run_feature_processing_pipeline(data, d=d)
 
     return whiten_params
@@ -232,18 +232,25 @@ def run_eval(queries_dir, groundtruth_dir, index_features, whiten_params, out_di
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
+
     parser = ArgumentParser()
 
-    parser.add_argument('--wt', dest='weighting', type=str, default='crow', help='weighting to apply for feature aggregation')
+    parser.add_argument('--wt', dest='weighting', type=str, default='crow',
+                        help='weighting to apply for feature aggregation')
 
-    parser.add_argument('--index_features', dest='index_features', type=str, default='oxford/pool5', help='directory containing raw features to index')
-    parser.add_argument('--whiten_features', dest='whiten_features', type=str, default='paris/pool5', help='directory containing raw features to fit whitening')
+    parser.add_argument('--index_features', dest='index_features', type=str, default='oxford/pool5',
+                        help='directory containing raw features to index')
+    parser.add_argument('--whiten_features', dest='whiten_features', type=str, default='paris/pool5',
+                        help='directory containing raw features to fit whitening')
 
-    parser.add_argument('--queries', dest='queries', type=str, default='oxford/pool5_queries/', help='directory containing image files')
-    parser.add_argument('--groundtruth', dest='groundtruth', type=str, default='oxford/groundtruth/', help='directory containing groundtruth files')
+    parser.add_argument('--queries', dest='queries', type=str, default='oxford/pool5_queries/',
+                        help='directory containing image files')
+    parser.add_argument('--groundtruth', dest='groundtruth', type=str, default='oxford/groundtruth/',
+                        help='directory containing groundtruth files')
     parser.add_argument('--d', dest='d', type=int, default=128, help='dimension of final feature')
     parser.add_argument('--out', dest='out', type=str, default=None, help='optional path to save ranked output')
-    parser.add_argument('--qe', dest='qe', type=int, default=0, help='perform query expansion with this many top results')
+    parser.add_argument('--qe', dest='qe', type=int, default=0,
+                        help='perform query expansion with this many top results')
     args = parser.parse_args()
 
     # Select which aggregation function to apply
@@ -256,13 +263,12 @@ if __name__ == '__main__':
         qe_fn = partial(simple_query_expansion, top_k=args.qe)
     else:
         qe_fn = None
-        
+
     # compute whitening params
     whitening_params = fit_whitening(args.whiten_features, agg_fn, args.d)
 
     # compute aggregated features and run the evaluation
     mAP = run_eval(args.queries, args.groundtruth, args.index_features, whitening_params, args.out, agg_fn, qe_fn)
-    print 'mAP: %f' % mAP
+    print('mAP: %f' % mAP)
 
     exit(0)
-
