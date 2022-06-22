@@ -1,4 +1,7 @@
-oxford/data/
+oxford/
+!/oxford/get_oxford.sh
+paris/data/
+!/paris/get_paris.sh
 
 .DS_Store
 *.pyc### JetBrains template
@@ -221,4 +224,3 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
-
