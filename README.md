@@ -7,7 +7,7 @@
  <div align="center"><a title="" href="https://github.com/zjykzj/crow-pytorch"><img align="center" src="./imgs/CroW.png"></a></div>
 
 <p align="center">
-  «crow» uses Pytorch to reproduce the crow implementation.
+  «crow-pytorch» uses Pytorch to reproduce the CroW implementation.
 <br>
 <br>
   <a href="https://github.com/RichardLitt/standard-readme"><img src="https://img.shields.io/badge/standard--readme-OK-green.svg?style=flat-square"></a>
