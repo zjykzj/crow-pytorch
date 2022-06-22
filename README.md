@@ -40,10 +40,30 @@ pip install -r requirements.txt
 
 ## Usage
 
-1. extract features
+1. Get data
 
 ```shell
+bash oxford/get_oxford.sh
+bash paris/get_paris.sh
+```
 
+2. Extract features
+
+```shell
+python extract_features.py --images oxford/data/* --out oxford/layer4
+python extract_queries.py --dataset oxford
+```
+
+3. Compile eval tool
+
+```shell
+g++ -O compute_ap.cpp -o compute_ap
+```
+
+4. Evaluate
+
+```shell
+python evaluate.py --index_features oxford/layer4 --whiten_features oxford/layer4
 ```
 
 ## Maintainers
