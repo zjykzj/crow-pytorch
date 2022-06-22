@@ -68,7 +68,8 @@ python evaluate.py --index_features oxford/layer4 --whiten_features oxford/layer
 
 ## Maintainers
 
-* zhujian - *Initial work* - [zjykzj](https://github.com/zjykzj)
+* Clayton Mellina - *Initial work* - [pumpikano](https://github.com/pumpikano)
+* zhujian - *Enhance work* - [zjykzj](https://github.com/zjykzj)
 
 ## Thanks
 
