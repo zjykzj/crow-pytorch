@@ -8,9 +8,13 @@
 """
 from typing import Type, Union, List, Optional, Callable, Any
 
+import torch
 from torch import nn as nn, Tensor
 from torchvision.models.resnet import ResNet as TResNet
 from torchvision.models.resnet import BasicBlock, Bottleneck, load_state_dict_from_url, model_urls
+import torchvision.transforms as transforms
+
+__supported_layer__ = ['layer4', 'avgpool', 'maxpool', 'fc']
 
 
 class ResNet(TResNet):
@@ -20,6 +24,8 @@ class ResNet(TResNet):
                  norm_layer: Optional[Callable[..., nn.Module]] = None) -> None:
         super().__init__(block, layers, num_classes, zero_init_residual, groups, width_per_group,
                          replace_stride_with_dilation, norm_layer)
+
+        self.maxpool2 = nn.AdaptiveMaxPool2d((1, 1))
 
     def _forward_impl(self, x: Tensor) -> Tensor:
         # See note [TorchScript super()]
@@ -46,6 +52,8 @@ class ResNet(TResNet):
             return x
         elif type == 'avgpool':
             return self.avgpool(x)
+        elif type == 'maxpool':
+            return self.maxpool2(x)
         elif type == 'fc':
             x = self.avgpool(x)
             x = torch.flatten(x, 1)
@@ -83,12 +91,40 @@ def resnet50(pretrained: bool = False, progress: bool = True, **kwargs: Any) -> 
                    **kwargs)
 
 
+def get_transform(origin=False):
+    if origin:
+        transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+        ])
+    else:
+        transform = transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+        ])
+
+    return transform
+
+
 if __name__ == '__main__':
     m = resnet50()
     print(m)
 
-    import torch
-
     data = torch.randn(1, 3, 224, 224)
-    res = m(data)
+    res = m(data, type='layer4')
+    assert res.shape == (1, 2048, 7, 7)
+    print(res.shape)
+
+    res = m(data, type='avgpool')
+    assert res.shape == (1, 2048, 1, 1)
+    print(res.shape)
+
+    res = m(data, type='maxpool')
+    assert res.shape == (1, 2048, 4, 4)
+    print(res.shape)
+
+    res = m(data, type='fc')
+    assert res.shape == (1, 1000)
     print(res.shape)
