@@ -27,7 +27,8 @@ rm -rf data/paris/
 
 # Get labels
 mkdir groundtruth/
-curl http://www.robots.ox.ac.uk/~vgg/data/parisbuildings/paris_120310.tgz | tar xz -C groundtruth/
+#curl http://www.robots.ox.ac.uk/~vgg/data/parisbuildings/paris_120310.tgz | tar xz -C groundtruth/
+curl https://www.robots.ox.ac.uk/~vgg/data/parisbuildings/paris_120310.tgz | tar xz -C groundtruth/
 
 popd
 
