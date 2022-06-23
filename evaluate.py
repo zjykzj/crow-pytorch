@@ -4,14 +4,41 @@ import os
 import sys
 
 import numpy as np
+import torch
 from tqdm import tqdm
 from functools import partial
 from tempfile import NamedTemporaryFile
+from argparse import ArgumentParser, RawTextHelpFormatter
+
+from torch import Tensor
+import torch.nn.functional as F
 
 from crow import run_feature_processing_pipeline, apply_crow_aggregation, apply_ucrow_aggregation, normalize
 
+weighting_schemes = ['crow', 'ucrow', 'identity']
 
-def get_nn(x, data, k=None):
+distance_schemes = ['euclidean', 'cosine']
+
+
+def cosine_distance(x1: Tensor, x2: Tensor) -> Tensor:
+    """
+    Calculate the distance between query set features and gallery set features.
+
+    Args:
+        x1 (torch.tensor): query set features.
+        x2 (torch.tensor): gallery set features.
+
+    Returns:
+        dis (torch.tensor): the cosine distance between query set features and gallery set features.
+    """
+    assert len(x1.shape) == len(x2.shape) == 2 and x1.shape[1] == x2.shape[1]
+    similarity_matrix = F.cosine_similarity(x1.unsqueeze(1),
+                                            x2.unsqueeze(0), dim=2)
+
+    return 1 - similarity_matrix
+
+
+def get_nn(x, data, dis='euclidean', k=None):
     """
     Find the k top indices and distances of index data vectors from query vector x.
 
@@ -30,11 +57,14 @@ def get_nn(x, data, k=None):
     if k is None:
         k = len(data)
 
-    dists = ((x - data) ** 2).sum(axis=1)
-    idx = np.argsort(dists)
-    dists = dists[idx]
+    if dis == 'euclidean':
+        dists = ((x - data) ** 2).sum(axis=1)
+    else:
+        dists = cosine_distance(torch.from_numpy(x), torch.from_numpy(data)).numpy()[0]
+    idxs = np.argsort(dists)
+    dists = dists[idxs]
 
-    return idx[:k], dists[:k]
+    return idxs[:k], dists[:k]
 
 
 def simple_query_expansion(Q, data, inds, top_k=10):
@@ -93,7 +123,7 @@ def load_features(feature_dir, verbose=True):
     sys.stdout.flush()
 
 
-def load_and_aggregate_features(feature_dir, agg_fn):
+def load_and_aggregate_features(feature_dir, agg_fn=None):
     """
     Given a directory of features as numpy pickles, load them, map them
     through the provided aggregation function, and return a list of
@@ -115,8 +145,9 @@ def load_and_aggregate_features(feature_dir, agg_fn):
     names = []
     for X, name in load_features(feature_dir):
         names.append(name)
-        X = agg_fn(X)
-        features.append(X)
+        if agg_fn is not None:
+            X = agg_fn(X)
+        features.append(X.reshape(-1))
 
     return features, names
 
@@ -170,7 +201,7 @@ def get_ap(inds, dists, query_name, index_names, groundtruth_dir, ranked_dir=Non
     return float(ap.strip())
 
 
-def fit_whitening(whiten_features, agg_fn, d):
+def fit_whitening(whiten_features, dw, d, agg_fn=None):
     """
     Calculate whitening parameters
 
@@ -184,19 +215,20 @@ def fit_whitening(whiten_features, agg_fn, d):
     :returns dict params:
         a dict of transformation parameters
     """
-
     # Load features for fitting whitening
-    data, _ = load_and_aggregate_features(whiten_features, agg_fn)
+    data, _ = load_and_aggregate_features(whiten_features, agg_fn=agg_fn)
 
     # Whiten, and reduce dim of features
     # Whitening is trained on the same images that we query against here for expediency
     print('Fitting PCA/whitening wth d=%d on %s ...' % (d, whiten_features))
-    _, whiten_params = run_feature_processing_pipeline(data, d=d)
+    _, whiten_params = run_feature_processing_pipeline(data, dw=dw, d=d)
 
     return whiten_params
 
 
-def run_eval(queries_dir, groundtruth_dir, index_features, whiten_params, out_dir, agg_fn, qe_fn=None):
+def run_eval(queries_dir, groundtruth_dir, index_features,
+             dw, d, whiten_params,
+             out_dir, dis='euclidean', agg_fn=None, qe_fn=None):
     """
     Run full evaluation pipeline on specified data.
 
@@ -209,29 +241,31 @@ def run_eval(queries_dir, groundtruth_dir, index_features, whiten_params, out_di
     :param callable agg_fn: aggregation function
     :param callable qe_fn: query expansion function
     """
-
-    data, image_names = load_and_aggregate_features(index_features, agg_fn)
-    data, _ = run_feature_processing_pipeline(np.vstack(data), params=whiten_params)
+    data, image_names = load_and_aggregate_features(index_features, agg_fn=agg_fn)
+    # print(np.array(data).shape)
+    data, _ = run_feature_processing_pipeline(np.vstack(data), dw=dw, d=d, params=whiten_params)
+    # print(data.shape)
 
     # Iterate queries, process them, rank results, and evaluate mAP
     aps = []
     for Q, query_name in tqdm(load_features(queries_dir)):
         # print('raw feature:\n', Q.shape)
-        Q = agg_fn(Q)
+        if agg_fn is not None:
+            Q = agg_fn(Q)
         # print('aggregated feature:\n', Q.shape)
-        if len(Q.shape) == 1:
+        if len(Q.shape) == 1 or len(Q.shape) != 2:
             Q = Q.reshape(1, -1)
 
         # Normalize and PCA to final feature
-        Q, _ = run_feature_processing_pipeline(Q, params=whiten_params)
+        Q, _ = run_feature_processing_pipeline(Q, dw=dw, d=d, params=whiten_params)
         # print('preprocessed feature:\n', Q.shape)
 
-        inds, dists = get_nn(Q, data)
+        inds, dists = get_nn(Q, data, dis=dis)
 
         # perform query_expansion
         if qe_fn is not None:
             Q = qe_fn(Q, data, inds)
-            inds, dists = get_nn(Q, data)
+            inds, dists = get_nn(Q, data, dis=dis)
 
         ap = get_ap(inds, dists, query_name, image_names, groundtruth_dir, out_dir)
         aps.append(ap)
@@ -240,33 +274,46 @@ def run_eval(queries_dir, groundtruth_dir, index_features, whiten_params, out_di
 
 
 if __name__ == '__main__':
-    from argparse import ArgumentParser
-
-    parser = ArgumentParser()
-
-    parser.add_argument('--wt', dest='weighting', type=str, default='crow',
-                        help='weighting to apply for feature aggregation')
-
-    parser.add_argument('--index_features', dest='index_features', type=str, default='oxford/layer4',
-                        help='directory containing raw features to index')
-    parser.add_argument('--whiten_features', dest='whiten_features', type=str, default='paris/layer4',
-                        help='directory containing raw features to fit whitening')
+    parser = ArgumentParser(formatter_class=RawTextHelpFormatter)
 
     parser.add_argument('--queries', dest='queries', type=str, default='oxford/layer4_queries/',
                         help='directory containing image files')
     parser.add_argument('--groundtruth', dest='groundtruth', type=str, default='oxford/groundtruth/',
                         help='directory containing groundtruth files')
+    parser.add_argument('--index_features', dest='index_features', type=str, default='oxford/layer4',
+                        help='directory containing raw features to index')
+
+    parser.add_argument('--wt', dest='weighting', type=str, default='crow',
+                        choices=weighting_schemes,
+                        help='weighting to apply for feature aggregation')
+
+    parser.add_argument('--dw', dest='dw', type=int, default=0,
+                        help='the way to reduce dimension.\n'
+                             'dw = 0: Do not perform dimension reduction.\n'
+                             'dw = 1: Perform L2-Norm only.\n'
+                             'dw = 2: Perform L2-Norm -> PCA -> L2-Norm.\n'
+                             'dw = 3: Perform L2-Norm -> PCA (Whitening) -> L2-Norm.\n'
+                             'Default: 0 ()')
     parser.add_argument('--d', dest='d', type=int, default=128, help='dimension of final feature')
-    parser.add_argument('--out', dest='out', type=str, default=None, help='optional path to save ranked output')
+    parser.add_argument('--whiten_features', dest='whiten_features', type=str, default='paris/layer4',
+                        help='directory containing raw features to fit whitening')
+
+    parser.add_argument('--dis', dest='dis', type=str, default='euclidean',
+                        choices=distance_schemes,
+                        help='Distance function. Default: Euclidean distance')
+
     parser.add_argument('--qe', dest='qe', type=int, default=0,
                         help='perform query expansion with this many top results')
+    parser.add_argument('--out', dest='out', type=str, default=None, help='optional path to save ranked output')
     args = parser.parse_args()
 
     # Select which aggregation function to apply
     if args.weighting == 'crow':
         agg_fn = apply_crow_aggregation
-    else:
+    elif args.weighting == 'ucrow':
         agg_fn = apply_ucrow_aggregation
+    else:
+        agg_fn = None
 
     if args.qe > 0:
         qe_fn = partial(simple_query_expansion, top_k=args.qe)
@@ -274,10 +321,14 @@ if __name__ == '__main__':
         qe_fn = None
 
     # compute whitening params
-    whitening_params = fit_whitening(args.whiten_features, agg_fn, args.d)
+    if args.dw >= 2:
+        whitening_params = fit_whitening(args.whiten_features, args.dw, args.d, agg_fn=agg_fn)
+    else:
+        whitening_params = None
 
     # compute aggregated features and run the evaluation
-    mAP = run_eval(args.queries, args.groundtruth, args.index_features, whitening_params, args.out, agg_fn, qe_fn)
+    mAP = run_eval(args.queries, args.groundtruth, args.index_features,
+                   args.dw, args.d, whitening_params, args.out, dis=args.dis, agg_fn=agg_fn, qe_fn=qe_fn)
     print('mAP: %f' % mAP)
 
     exit(0)
