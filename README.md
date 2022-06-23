@@ -52,6 +52,8 @@ bash paris/get_paris.sh
 ```shell
 python extract_features.py --images oxford/data/* --out oxford/layer4
 python extract_queries.py --dataset oxford
+python extract_features.py --images paris/data/* --out paris/layer4
+python extract_queries.py --dataset paris
 ```
 
 3. Compile eval tool
@@ -63,7 +65,7 @@ g++ -O compute_ap.cpp -o compute_ap
 4. Evaluate
 
 ```shell
-python evaluate.py --index_features oxford/layer4 --whiten_features oxford/layer4
+python evaluate.py --index_features oxford/layer4 --whiten_features paris/layer4
 ```
 
 ## Maintainers
