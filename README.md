@@ -73,7 +73,7 @@ python evaluate.py --index_features oxford/layer4 --whiten_features oxford/layer
 
 ## Thanks
 
-* [YahooArchive/crow](https://github.com/zjykzj/crow-pytorch)
+* [YahooArchive/crow](https://github.com/YahooArchive/crow)
 
 ## Contributing
 
