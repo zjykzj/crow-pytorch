@@ -1,6 +1,6 @@
 oxford/
 !/oxford/get_oxford.sh
-paris/data/
+paris/
 !/paris/get_paris.sh
 compute_ap
 
