@@ -256,3 +256,21 @@ After the above experiments, the optimal configuration is
 6. Rank: Default
 7. Re-Rank: `QE`
 8. Eval criteria. Default: mAP for Oxford5k
+
+## bak
+
+```shell
+python extract_features.py --images oxford/data/* --out oxford/avgpool --layer avgpool
+python extract_features.py --images paris/data/* --out paris/avgpool --layer avgpool
+python extract_queries.py --dataset oxford --images data --groundtruth groundtruth --layer avgpool
+
+python evaluate.py --queries oxford/avgpool_queries --groundtruth oxford/groundtruth --index_features oxford/layeravgpool --wt crow --dw 3 --whiten_features paris/avgpool --d 512 --qe 3
+Loading features paris/avgpool ...
+Processing file 6300
+Fitting PCA/whitening wth d=512 on paris/avgpool ...
+Loading features oxford/layeravgpool ...
+Processing file 5000
+54it [00:02, 25.43it/s]
+55it [00:02, 26.55it/s]
+mAP: 0.524220
+```
