@@ -10,7 +10,7 @@ from tqdm import tqdm
 import numpy as np
 from PIL import Image
 
-from resnet import resnet50
+from resnet import resnet50, get_transform, __supported_layer__
 
 
 ###################################
@@ -77,27 +77,20 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--images', dest='images', type=str, nargs='+', required=True,
                         help='glob pattern to image data')
-    parser.add_argument('--layer', dest='layer', type=str, default='layer4',
-                        choices=['layer4', 'avgpool', 'fc'],
-                        help='model layer to extract')
-    # parser.add_argument('--layer', dest='layer', type=str, default='pool5', help='model layer to extract')
-    # parser.add_argument('--prototxt', dest='prototxt', type=str, default='vgg/VGG_ILSVRC_16_pool5.prototxt',
-    #                     help='path to prototxt')
-    # parser.add_argument('--caffemodel', dest='caffemodel', type=str, default='vgg/VGG_ILSVRC_16_layers.caffemodel',
-    #                     help='path to model params')
     parser.add_argument('--out', dest='out', type=str, default='', help='path to save output')
-    args = parser.parse_args()
 
-    # net = caffe.Net(args.prototxt, args.caffemodel, caffe.TEST)
+    parser.add_argument('--layer', dest='layer', type=str, default='layer4',
+                        choices=__supported_layer__,
+                        help='Model layer to extract')
+    parser.add_argument('--origin', action='store_true', default=False, help='Use original input size. Default: False')
+    args = parser.parse_args()
+    # print('args:\n', args)
+
+    # Load networks
     net = resnet50(pretrained=True)
     net.eval()
 
-    transform = transforms.Compose([
-        transforms.Resize(256),
-        transforms.CenterCrop((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
-    ])
+    transform = get_transform(args.origin)
 
     if not os.path.exists(args.out):
         os.makedirs(args.out)
