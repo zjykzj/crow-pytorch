@@ -90,7 +90,7 @@ def normalize(x, copy=False):
         return sknormalize(x, copy=copy)
 
 
-def run_feature_processing_pipeline(features, d=128, whiten=True, copy=False, params=None):
+def run_feature_processing_pipeline(features, dw=0, d=128, copy=False, params=None):
     """
     Given a set of feature vectors, process them with PCA/whitening and return the transformed features.
     If the params argument is not provided, the transformation is fitted to the data.
@@ -109,20 +109,24 @@ def run_feature_processing_pipeline(features, d=128, whiten=True, copy=False, pa
     :returns ndarray: transformed features
     :returns dict: transform parameters
     """
-    # Normalize
-    features = normalize(features, copy=copy)
-
-    # Whiten and reduce dimension
-    if params:
-        pca = params['pca']
-        features = pca.transform(features)
+    if dw == 0:
+        return features, params
     else:
-        pca = PCA(n_components=d, whiten=whiten, copy=copy)
-        features = pca.fit_transform(features)
-        params = {'pca': pca}
+        # Normalize
+        features = normalize(features, copy=copy)
 
-    # Normalize
-    features = normalize(features, copy=copy)
+    if dw >= 2:
+        # Whiten and reduce dimension
+        if params:
+            pca = params['pca']
+            features = pca.transform(features)
+        else:
+            pca = PCA(n_components=d, whiten=(dw == 3), copy=copy)
+            features = pca.fit_transform(features)
+            params = {'pca': pca}
+
+        # Normalize
+        features = normalize(features, copy=copy)
 
     return features, params
 
