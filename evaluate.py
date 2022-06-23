@@ -219,7 +219,8 @@ def run_eval(queries_dir, groundtruth_dir, index_features, whiten_params, out_di
         # print('raw feature:\n', Q.shape)
         Q = agg_fn(Q)
         # print('aggregated feature:\n', Q.shape)
-        Q = Q.reshape(1, -1)
+        if len(Q.shape) == 1:
+            Q = Q.reshape(1, -1)
 
         # Normalize and PCA to final feature
         Q, _ = run_feature_processing_pipeline(Q, params=whiten_params)
