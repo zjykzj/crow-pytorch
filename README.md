@@ -1,8 +1,8 @@
-<!-- <div align="right">
+<div align="right">
   Language:
     🇺🇸
   <a title="Chinese" href="./README.zh-CN.md">🇨🇳</a>
-</div> -->
+</div>
 
  <div align="center"><a title="" href="https://github.com/zjykzj/crow-pytorch"><img align="center" src="./imgs/CroW.png"></a></div>
 
@@ -30,7 +30,7 @@
 
 [CroW](https://arxiv.org/abs/1512.04065) provides a general convolution feature extraction framework, and proposes parameterless spatial weighting and channel weighting algorithms. In addition, a very detailed implementation is provided - [YahooArchive/crow](https://github.com/YahooArchive/crow).
 
-The official implementation is based on [caffe](http://caffe.berkeleyvision.org/), but the most popular deep reasoning framework at present is [pytorch](http://caffe.berkeleyvision.org/). In order to better understand the implementation of CroW, I try to replace the implementation of caffe in the warehouse with pytorch.
+The official implementation is based on [caffe2](https://caffe2.ai/), but the most popular deep reasoning framework at present is [pytorch](http://caffe.berkeleyvision.org/). In order to better understand the implementation of CroW, I try to replace the implementation of caffe in the warehouse with pytorch.
 
 ## Installation
 
