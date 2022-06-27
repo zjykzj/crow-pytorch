@@ -257,6 +257,36 @@ After the above experiments, the optimal configuration is
 7. Re-Rank: `QE`
 8. Eval criteria. Default: mAP for Oxford5k
 
+## 224 vs. Origin
+
+Using the configuration debugged above, test the evaluation result of the original input image size again.
+
+```shell
+python extract_features.py --images oxford/data/* --out oxford/layer4 --layer layer4 --origin
+python extract_features.py --images paris/data/* --out paris/layer4 --layer layer4 --origin
+python extract_queries.py --dataset oxford --images data --groundtruth groundtruth --layer layer4 --origin
+
+$ python evaluate.py --queries oxford/layer4_queries --groundtruth oxford/groundtruth --index_features oxford/layer4 --wt crow --dw 3 --whiten_features oxford/layer4 --d 512 --qe 3
+Loading features oxford/layer4 ...
+Processing file 5000
+Fitting PCA/whitening wth d=512 on oxford/layer4 ...
+Loading features oxford/layer4 ...
+Processing file 5000
+55it [00:02, 19.69it/s]
+55it [00:02, 18.59it/s]
+mAP: 0.613496
+
+$ python evaluate.py --queries oxford/layer4_queries --groundtruth oxford/groundtruth --index_features oxford/layer4 --wt crow --dw 3 --whiten_features oxford/layer4 --d 512 --qe 10
+Loading features oxford/layer4 ...
+Processing file 5000
+Fitting PCA/whitening wth d=512 on oxford/layer4 ...
+Loading features oxford/layer4 ...
+Processing file 5000
+53it [00:02, 20.63it/s]
+55it [00:02, 21.92it/s]
+mAP: 0.635490
+```
+
 ## bak
 
 ```shell
