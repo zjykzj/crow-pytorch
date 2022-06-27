@@ -12,7 +12,6 @@ import torch
 from torch import nn as nn, Tensor
 from torchvision.models.resnet import ResNet as TResNet
 from torchvision.models.resnet import BasicBlock, Bottleneck, load_state_dict_from_url, model_urls
-import torchvision.transforms as transforms
 
 __supported_layer__ = ['layer4', 'avgpool', 'maxpool', 'fc']
 
@@ -89,23 +88,6 @@ def resnet50(pretrained: bool = False, progress: bool = True, **kwargs: Any) -> 
     """
     return _resnet('resnet50', Bottleneck, [3, 4, 6, 3], pretrained, progress,
                    **kwargs)
-
-
-def get_transform(origin=False):
-    if origin:
-        transform = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
-        ])
-    else:
-        transform = transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop((224, 224)),
-            transforms.ToTensor(),
-            transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
-        ])
-
-    return transform
 
 
 if __name__ == '__main__':

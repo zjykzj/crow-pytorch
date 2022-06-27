@@ -10,7 +10,8 @@ from tqdm import tqdm
 import numpy as np
 from PIL import Image
 
-from resnet import resnet50, get_transform, __supported_layer__
+from transform import get_transform
+from resnet import resnet50, __supported_layer__
 
 
 ###################################
